@@ -71,4 +71,8 @@ overrides:
   #
   # 所以可以用一个本地空实现顶替，代价只是不做服务端图片缩放。
   # 若你网络正常，可删掉这行让它装真实 sharp。
-  sharp: file:C:\Users\Administrator\.dsh\local-stubs\sharp
+  #
+  # 路径按你自己的实际位置改（这里与 DSH_HOME 保持一致）。
+  # 桩包内容：package.json 声明 name/version，index.js 导出一个会抛错的可调用对象，
+  # 因为调用方对 import 失败和调用失败都有兜底，所以两种都能正确降级。
+  sharp: file:D:\dsh\local-stubs\sharp
