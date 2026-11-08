@@ -1,0 +1,78 @@
+# ===================================================================
+#  dsh profile 的 pnpm 配置参考
+#
+#  放在每个 profile 目录下，例如：
+#      D:\dsh\profiles\dsh-lark\pnpm-workspace.yaml
+#      D:\dsh\profiles\dsh-lark-sdk\pnpm-workspace.yaml
+#
+#  ------------------------------------------------------------------
+#  两个关键点（踩过的坑）：
+#
+#  1. pnpm 11 起不再读取 package.json 里的 "pnpm" 字段，
+#     overrides 必须写在这个文件里。写在 package.json 里会被静默忽略，
+#     只给一行 WARN。
+#
+#  2. 本文件必须用 CRLF 行尾。用 LF 写会让 YAML 把 "overrides:"
+#     解析成上一条注释的延续，导致 overrides 静默失效。
+#  ------------------------------------------------------------------
+# ===================================================================
+
+packages:
+  - .
+
+# 用真实文件而非符号链接，profile 目录更自包含，复制更可靠
+nodeLinker: hoisted
+
+# rc.8 的插件需要 zod 等 peer 依赖，关掉自动安装会启动时报
+# ERR_MODULE_NOT_FOUND
+autoInstallPeers: true
+
+# pnpm 11 的供应链策略：默认拒绝跑构建脚本。
+# 不批准这些原生包就没有 .node 二进制，运行时会失败。
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  '@google/genai': true
+  esbuild: true
+  koffi: true
+  node-pty: true
+  protobufjs: true
+  sharp: true
+
+onlyBuiltDependencies:
+  - node-pty
+  - koffi
+  - protobufjs
+  - esbuild
+  - sharp
+
+# -------------------------------------------------------------------
+# overrides —— 这两条是必需的，删了 bot 就跑不起来
+# -------------------------------------------------------------------
+overrides:
+
+  # dsh 0.1.0-rc.8 要求 cordis-plugin-hmr ^1.0.16，但 pnpm 会解析到
+  # 最新的 1.0.19，而 1.0.18 起移除了 registerConfig() 方法 ——
+  # dsh-app-boot 在启动时调用它，会直接崩：
+  #     TypeError: hmr.registerConfig is not a function
+  #
+  # 各版本支持情况：
+  #     1.0.16  ✅      1.0.17  ✅
+  #     1.0.18  ❌      1.0.19  ❌
+  #
+  # 钉 1.0.17（比 1.0.16 新，且兼容 cordis 4.0.4）。
+  '@deepseek-ai/cordis-plugin-hmr': 1.0.17
+
+  # sharp 是可选的图像处理依赖，它的 @img/* 平台二进制很大且在某些网络下
+  # 根本下不动（node-pty / sharp 这类包经常卡住整个安装）。
+  #
+  # dsh-lark-bot 对 sharp 是动态导入 + 优雅降级：
+  #     try { const mod = await import("sharp"); sharp = mod.default; } catch { }
+  #     if (!sharp) return path;      // 拿不到就直接用原图
+  #
+  # 所以可以用一个本地空实现顶替，代价只是不做服务端图片缩放。
+  # 若你网络正常，可删掉这行让它装真实 sharp。
+  #
+  # 路径按你自己的实际位置改（这里与 DSH_HOME 保持一致）。
+  # 桩包内容：package.json 声明 name/version，index.js 导出一个会抛错的可调用对象，
+  # 因为调用方对 import 失败和调用失败都有兜底，所以两种都能正确降级。
+  sharp: file:D:\dsh\local-stubs\sharp

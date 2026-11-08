@@ -1,0 +1,33 @@
+# 规范化行尾，避免跨机器克隆后出现"脚本跑不起来"的问题
+#
+# 背景：这些格式差异不是风格问题，是功能问题 ——
+#   * .bat 必须是 CRLF 且纯 ASCII，否则 cmd.exe 用本地码页读取时
+#     中文会被截断、注释被当成命令执行
+#   * .yaml 若变成 LF，pnpm 的 overrides 可能被解析进注释而静默失效
+# 所以这里显式声明，而不是依赖各人本地的 core.autocrlf 设置。
+
+* text=auto
+
+# 仓库内统一 LF
+*.md      text eol=lf
+*.yaml    text eol=lf
+*.yml     text eol=lf
+*.json    text eol=lf
+*.ps1     text eol=lf
+*.sh      text eol=lf
+*.py      text eol=lf
+.gitignore text eol=lf
+LICENSE   text eol=lf
+
+# Windows 批处理必须是 CRLF
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+
+# 二进制
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.zip     binary
+*.tgz     binary

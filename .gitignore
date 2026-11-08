@@ -1,0 +1,19 @@
+# 补丁脚本会生成这些备份（保留给使用者本地回滚，不入库）
+*.bak
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# 别把凭据和运行日志提交上来
+.env
+.env.*
+*.log
+credentials*.yaml
+.credentials.yaml
